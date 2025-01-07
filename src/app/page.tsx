@@ -19,7 +19,7 @@ export default function Home() {
     }
 
     try {
-      const { error } = await supabase
+      const result = await supabase
         .from('email_subscribers')
         .insert([
           { 
@@ -29,13 +29,14 @@ export default function Home() {
           }
         ])
 
-      if (error) throw error
+      if (result.error) throw result.error
 
       toast.success('PDF가 이메일로 전송되었습니다!')
       setEmail('')
       setIsMarketingAgreed(false)
       setIsPrivacyAgreed(false)
-    } catch (error) {
+    } catch (err) {
+      console.error('Error:', err)
       toast.error('오류가 발생했습니다. 다시 시도해주세요.')
     }
   }
