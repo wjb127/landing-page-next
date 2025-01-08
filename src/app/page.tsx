@@ -28,8 +28,12 @@ export default function Home() {
             privacy_agreed: isPrivacyAgreed
           }
         ])
+        .select()
 
-      if (result.error) throw result.error
+      if (result.error) {
+        console.error('Error:', result.error)
+        throw result.error
+      }
 
       toast.success('PDF가 이메일로 전송되었습니다!')
       setEmail('')
@@ -43,7 +47,7 @@ export default function Home() {
 
   const handlePaymentClick = async () => {
     try {
-      await supabase
+      const result = await supabase
         .from('payment_clicks')
         .insert([
           { 
@@ -51,6 +55,11 @@ export default function Home() {
             clicked_at: new Date().toISOString()
           }
         ])
+        .select()
+
+      if (result.error) {
+        console.error('Error:', result.error)
+      }
       
       setShowPopup(true)
     } catch (error) {
