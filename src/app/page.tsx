@@ -86,7 +86,7 @@ export default function Home() {
             무료 PDF로 시작해보세요!
           </h1>
           <p className="text-xl text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl">
-            이메일 등록 후 상품 정보를 �로 다운로드 받으세요.
+            이메일 등록 후 상품 정보를 버튼으로 다운로드 받으세요.
           </p>
 
           {/* Email Form */}
