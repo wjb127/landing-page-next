@@ -19,26 +19,35 @@ export default function Home() {
     }
 
     try {
-      const result = await supabase
+      // 먼저 이메일이 존재하는지 확인
+      const { data: existingUser } = await supabase
         .from('email_subscribers')
-        .insert([
-          { 
-            email, 
-            marketing_agreed: isMarketingAgreed,
-            privacy_agreed: isPrivacyAgreed
-          }
-        ])
-        .select()
+        .select('email')
+        .eq('email', email)
+        .single()
 
-      if (result.error) {
-        console.error('Error:', result.error)
-        throw result.error
+      // 새로운 사용자인 경우에만 DB에 저장
+      if (!existingUser) {
+        const { error } = await supabase
+          .from('email_subscribers')
+          .insert([
+            { 
+              email, 
+              marketing_agreed: isMarketingAgreed,
+              privacy_agreed: isPrivacyAgreed
+            }
+          ])
+
+        if (error) {
+          console.error('Error saving email:', error)
+          // 저장 실패해도 계속 진행
+        }
       }
 
-      // PDF 다운로드 트리거
+      // 이메일 저장 성공 여부와 관계없이 PDF 다운로드 진행
       const link = document.createElement('a')
-      link.href = '/sample.pdf' // public 폴더에 sample.pdf 파일을 넣어주세요
-      link.download = '상품소개서.pdf' // 다운로드될 파일명
+      link.href = '/sample.pdf'
+      link.download = '상품소개서.pdf'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -47,9 +56,21 @@ export default function Home() {
       setEmail('')
       setIsMarketingAgreed(false)
       setIsPrivacyAgreed(false)
+      
     } catch (err) {
       console.error('Error:', err)
-      toast.error('오류가 발생했습니다. 다시 시도해주세요.')
+      // 에러가 발생해도 PDF 다운로드는 진행
+      const link = document.createElement('a')
+      link.href = '/sample.pdf'
+      link.download = '상품소개서.pdf'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast.success('PDF 다운로드가 시작됩니다!')
+      setEmail('')
+      setIsMarketingAgreed(false)
+      setIsPrivacyAgreed(false)
     }
   }
 
