@@ -35,7 +35,15 @@ export default function Home() {
         throw result.error
       }
 
-      toast.success('PDF가 이메일로 전송되었습니다!')
+      // PDF 다운로드 트리거
+      const link = document.createElement('a')
+      link.href = '/sample.pdf' // public 폴더에 sample.pdf 파일을 넣어주세요
+      link.download = '상품소개서.pdf' // 다운로드될 파일명
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast.success('PDF 다운로드가 시작됩니다!')
       setEmail('')
       setIsMarketingAgreed(false)
       setIsPrivacyAgreed(false)
@@ -78,7 +86,7 @@ export default function Home() {
             무료 PDF로 시작해보세요!
           </h1>
           <p className="text-xl text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl">
-            이메일 등록 후 상품 정보를 확인해보세요.
+            이메일 등록 후 상품 정보를 �로 다운로드 받으세요.
           </p>
 
           {/* Email Form */}
@@ -122,7 +130,7 @@ export default function Home() {
               type="submit"
               className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              지금 PDF 받기
+              PDF 다운로드하기
             </button>
           </form>
 
