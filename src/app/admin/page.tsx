@@ -34,7 +34,12 @@ export default function AdminDashboard() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (subscriberError) throw subscriberError
+      if (subscriberError) {
+        console.error('Subscriber fetch error:', subscriberError)
+        throw subscriberError
+      }
+
+      console.log('Fetched subscribers:', subscriberData) // 데이터 로깅
 
       // 결제 클릭 데이터 가져오기
       const { data: clickData, error: clickError } = await supabase
@@ -42,10 +47,15 @@ export default function AdminDashboard() {
         .select('*')
         .order('clicked_at', { ascending: false })
 
-      if (clickError) throw clickError
+      if (clickError) {
+        console.error('Payment clicks fetch error:', clickError)
+        throw clickError
+      }
 
-      setSubscribers(subscriberData)
-      setPaymentClicks(clickData)
+      console.log('Fetched payment clicks:', clickData) // 데이터 로깅
+
+      setSubscribers(subscriberData || [])
+      setPaymentClicks(clickData || [])
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
