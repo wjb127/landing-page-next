@@ -10,4 +10,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // Supabase 클라이언트 인스턴스 생성
 // 이 인스턴스를 통해 데이터베이스 작업을 수행
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+    flowType: 'pkce',  // PKCE 인증 플로우 사용
+  },
+})
