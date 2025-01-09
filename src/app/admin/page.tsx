@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import { User } from '@supabase/supabase-js'
 
 interface Subscriber {
   id: string
@@ -24,13 +25,9 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
   const [paymentClicks, setPaymentClicks] = useState<PaymentClick[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       
@@ -45,7 +42,11 @@ export default function AdminDashboard() {
       console.error('Error checking user:', error)
       router.push('/admin/login')
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkUser()
+  }, [checkUser])
 
   const handleLogout = async () => {
     try {
