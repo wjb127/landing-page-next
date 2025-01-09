@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
+import Link from 'next/link'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -185,6 +186,17 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Footer에 관리자 링크 추가 */}
+      <footer className="py-4 text-center text-gray-500 text-sm">
+        <p>© 2024 Your Company</p>
+        <Link 
+          href="/admin/login" 
+          className="mt-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+        >
+          관리자 로그인
+        </Link>
+      </footer>
     </div>
   )
 }
