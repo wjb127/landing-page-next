@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [files, setFiles] = useState<FileInfo[]>([])
   const [uploading, setUploading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const checkUser = useCallback(async () => {
     try {
@@ -138,19 +139,27 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) {
+      setSelectedFile(null)
+      return
+    }
+    setSelectedFile(e.target.files[0])
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast.error('파일을 선택해주세요.')
       return
     }
 
     try {
       setUploading(true)
-      const file = e.target.files[0]
       
       const { error } = await supabase
         .storage
         .from('pdf-files')
-        .upload(`product-guide-${Date.now()}.pdf`, file, {
+        .upload(`product-guide-${Date.now()}.pdf`, selectedFile, {
           cacheControl: '3600',
           upsert: true
         })
@@ -159,6 +168,11 @@ export default function AdminDashboard() {
 
       toast.success('파일이 업로드되었습니다.')
       fetchFiles() // 파일 목록 새로고침
+      setSelectedFile(null) // 선택된 파일 초기화
+      
+      // 파일 input 초기화
+      const fileInput = document.getElementById('file-input') as HTMLInputElement
+      if (fileInput) fileInput.value = ''
     } catch (error) {
       console.error('Error uploading file:', error)
       toast.error('파일 업로드에 실패했습니다.')
@@ -322,23 +336,37 @@ export default function AdminDashboard() {
               PDF 파일 관리
             </h2>
             
-            <div className="mb-6">
-              <label className="block mb-2">
-                <span className="sr-only">PDF 파일 선택</span>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-full file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100"
-                />
-              </label>
-              {uploading && <p className="text-sm text-gray-500">업로드 중...</p>}
+            <div className="mb-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <label className="flex-1">
+                  <span className="sr-only">PDF 파일 선택</span>
+                  <input
+                    id="file-input"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileSelect}
+                    className="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-blue-50 file:text-blue-700
+                      hover:file:bg-blue-100"
+                  />
+                </label>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading || !selectedFile}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg
+                    hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? '업로드 중...' : '업로드'}
+                </button>
+              </div>
+              {selectedFile && (
+                <p className="text-sm text-gray-600">
+                  선택된 파일: {selectedFile.name}
+                </p>
+              )}
             </div>
 
             <div className="overflow-x-auto">
