@@ -67,13 +67,32 @@ export default function Home() {
         throw result.error
       }
 
-      // PDF 다운로드
+      // 방법 1: fetch를 사용하여 다운로드
       if (pdfUrl) {
-        window.open(pdfUrl, '_blank')
+        const response = await fetch(pdfUrl)
+        const blob = await response.blob()
+        const downloadUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = 'product-guide.pdf' // 다운로드될 파일명
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(downloadUrl)
       } else {
         toast.error('PDF 파일을 찾을 수 없습니다.')
         return
       }
+
+      // 또는 방법 2: Content-Disposition 헤더를 사용
+      // if (pdfUrl) {
+      //   const link = document.createElement('a')
+      //   link.href = `${pdfUrl}?download=true` // Supabase Storage URL에 download 파라미터 추가
+      //   link.setAttribute('download', 'product-guide.pdf')
+      //   document.body.appendChild(link)
+      //   link.click()
+      //   document.body.removeChild(link)
+      // }
 
       toast.success('PDF 다운로드가 시작됩니다!')
       setEmail('')
