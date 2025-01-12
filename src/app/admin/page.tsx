@@ -20,12 +20,20 @@ interface PaymentClick {
   clicked_at: string
 }
 
+interface FileInfo {
+  name: string
+  url: string
+  created_at: string
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
   const [paymentClicks, setPaymentClicks] = useState<PaymentClick[]>([])
   const [user, setUser] = useState<User | null>(null)
+  const [files, setFiles] = useState<FileInfo[]>([])
+  const [uploading, setUploading] = useState(false)
 
   const checkUser = useCallback(async () => {
     try {
@@ -98,6 +106,89 @@ export default function AdminDashboard() {
       setIsLoading(false)
     }
   }
+
+  const fetchFiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from('pdf-files')
+        .list()
+
+      if (error) throw error
+
+      const filesWithUrls = await Promise.all(
+        data.map(async (file) => {
+          const { data: { publicUrl } } = supabase
+            .storage
+            .from('pdf-files')
+            .getPublicUrl(file.name)
+
+          return {
+            name: file.name,
+            url: publicUrl,
+            created_at: file.created_at
+          }
+        })
+      )
+
+      setFiles(filesWithUrls)
+    } catch (error) {
+      console.error('Error fetching files:', error)
+      toast.error('파일 목록을 불러오는데 실패했습니다.')
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      return
+    }
+
+    try {
+      setUploading(true)
+      const file = e.target.files[0]
+      
+      const { error } = await supabase
+        .storage
+        .from('pdf-files')
+        .upload(`product-guide-${Date.now()}.pdf`, file, {
+          cacheControl: '3600',
+          upsert: true
+        })
+
+      if (error) throw error
+
+      toast.success('파일이 업로드되었습니다.')
+      fetchFiles() // 파일 목록 새로고침
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      toast.error('파일 업로드에 실패했습니다.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFileDelete = async (fileName: string) => {
+    try {
+      const { error } = await supabase
+        .storage
+        .from('pdf-files')
+        .remove([fileName])
+
+      if (error) throw error
+
+      toast.success('파일이 삭제되었습니다.')
+      fetchFiles() // 파일 목록 새로고침
+    } catch (error) {
+      console.error('Error deleting file:', error)
+      toast.error('파일 삭제에 실패했습니다.')
+    }
+  }
+
+  useEffect(() => {
+    if (user) {
+      fetchFiles()
+    }
+  }, [user])
 
   // 날짜 포맷팅 함수
   const formatDate = (dateString: string) => {
@@ -216,6 +307,64 @@ export default function AdminDashboard() {
                     <tr key={click.id} className="border-b dark:border-gray-700">
                       <td className="p-3">{click.email}</td>
                       <td className="p-3">{formatDate(click.clicked_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* 파일 업로드 섹션 */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+              PDF 파일 관리
+            </h2>
+            
+            <div className="mb-6">
+              <label className="block mb-2">
+                <span className="sr-only">PDF 파일 선택</span>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100"
+                />
+              </label>
+              {uploading && <p className="text-sm text-gray-500">업로드 중...</p>}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b dark:border-gray-700">
+                    <th className="text-left p-3">파일명</th>
+                    <th className="text-left p-3">업로드 일시</th>
+                    <th className="text-left p-3">작업</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {files.map((file) => (
+                    <tr key={file.name} className="border-b dark:border-gray-700">
+                      <td className="p-3">{file.name}</td>
+                      <td className="p-3">
+                        {new Date(file.created_at).toLocaleString('ko-KR')}
+                      </td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => handleFileDelete(file.name)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          삭제
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

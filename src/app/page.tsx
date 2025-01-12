@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 import Link from 'next/link'
@@ -10,6 +10,37 @@ export default function Home() {
   const [isMarketingAgreed, setIsMarketingAgreed] = useState(false)
   const [isPrivacyAgreed, setIsPrivacyAgreed] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+
+  // 최신 PDF 파일 URL 가져오기
+  useEffect(() => {
+    const fetchLatestPdf = async () => {
+      try {
+        const { data, error } = await supabase
+          .storage
+          .from('pdf-files')
+          .list('', {
+            limit: 1,
+            sortBy: { column: 'created_at', order: 'desc' }
+          })
+
+        if (error) throw error
+
+        if (data && data.length > 0) {
+          const { data: { publicUrl } } = supabase
+            .storage
+            .from('pdf-files')
+            .getPublicUrl(data[0].name)
+
+          setPdfUrl(publicUrl)
+        }
+      } catch (error) {
+        console.error('Error fetching PDF:', error)
+      }
+    }
+
+    fetchLatestPdf()
+  }, [])
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,58 +51,37 @@ export default function Home() {
     }
 
     try {
-      // 먼저 이메일이 존재하는지 확인
-      const { data: existingUser } = await supabase
+      const result = await supabase
         .from('email_subscribers')
-        .select('email')
-        .eq('email', email)
-        .single()
+        .insert([
+          { 
+            email, 
+            marketing_agreed: isMarketingAgreed,
+            privacy_agreed: isPrivacyAgreed
+          }
+        ])
+        .select()
 
-      // 새로운 사용자인 경우에만 DB에 저장
-      if (!existingUser) {
-        const { error } = await supabase
-          .from('email_subscribers')
-          .insert([
-            { 
-              email, 
-              marketing_agreed: isMarketingAgreed,
-              privacy_agreed: isPrivacyAgreed
-            }
-          ])
-
-        if (error) {
-          console.error('Error saving email:', error)
-          // 저장 실패해도 계속 진행
-        }
+      if (result.error) {
+        console.error('Error:', result.error)
+        throw result.error
       }
 
-      // 이메일 저장 성공 여부와 관계없이 PDF 다운로드 진행
-      const link = document.createElement('a')
-      link.href = '/sample.pdf'
-      link.download = '상품소개서.pdf'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      // PDF 다운로드
+      if (pdfUrl) {
+        window.open(pdfUrl, '_blank')
+      } else {
+        toast.error('PDF 파일을 찾을 수 없습니다.')
+        return
+      }
 
       toast.success('PDF 다운로드가 시작됩니다!')
       setEmail('')
       setIsMarketingAgreed(false)
       setIsPrivacyAgreed(false)
-      
     } catch (err) {
       console.error('Error:', err)
-      // 에러가 발생해도 PDF 다운로드는 진행
-      const link = document.createElement('a')
-      link.href = '/sample.pdf'
-      link.download = '상품소개서.pdf'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-
-      toast.success('PDF 다운로드가 시작됩니다!')
-      setEmail('')
-      setIsMarketingAgreed(false)
-      setIsPrivacyAgreed(false)
+      toast.error('오류가 발생했습니다. 다시 시도해주세요.')
     }
   }
 
