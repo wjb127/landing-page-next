@@ -30,7 +30,7 @@ export default function SignUp() {
 
     try {
       // 1. 회원가입
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
