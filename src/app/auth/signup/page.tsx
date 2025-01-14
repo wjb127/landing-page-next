@@ -29,12 +29,33 @@ export default function SignUp() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // 1. 회원가입
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            confirmed_at: new Date().toISOString(), // 이메일 인증 자동 처리
+          }
+        }
+      })
+
+      if (signUpError) throw signUpError
+
+      // 2. 관리자 권한 부여를 위해 admin_users 테이블에 추가
+      const { error: insertError } = await supabase
+        .from('admin_users')
+        .insert([{ email }])
+
+      if (insertError) throw insertError
+
+      // 3. 자동 로그인
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (signInError) throw signInError
 
       toast.success('회원가입이 완료되었습니다!')
       router.push('/admin')
