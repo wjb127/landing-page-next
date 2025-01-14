@@ -35,7 +35,7 @@ export default function SignUp() {
         password,
         options: {
           data: {
-            confirmed_at: new Date().toISOString(), // 이메일 인증 자동 처리
+            confirmed_at: new Date().toISOString(),
           }
         }
       })
@@ -49,16 +49,8 @@ export default function SignUp() {
 
       if (insertError) throw insertError
 
-      // 3. 자동 로그인
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) throw signInError
-
-      toast.success('회원가입이 완료되었습니다!')
-      router.push('/admin')
+      toast.success('회원가입이 완료되었습니다! 로그인해주세요.')
+      router.push('/auth/login')
     } catch (error) {
       console.error('Error signing up:', error)
       toast.error('회원가입에 실패했습니다.')
