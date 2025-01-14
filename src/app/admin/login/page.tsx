@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
-export default function AdminLogin() {
+export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
@@ -36,8 +37,8 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center">관리자 로그인</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <h1 className="text-2xl font-bold mb-6 text-center">로그인</h1>
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               이메일
@@ -69,6 +70,12 @@ export default function AdminLogin() {
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </button>
+          <p className="text-center text-sm text-gray-600">
+            계정이 없으신가요?{' '}
+            <Link href="/auth/signup" className="text-blue-600 hover:underline">
+              회원가입
+            </Link>
+          </p>
         </form>
       </div>
     </div>

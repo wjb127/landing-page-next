@@ -9,15 +9,21 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.hash)
-      if (error) {
-        console.error('Error during auth callback:', error)
-        router.push('/auth/error')
-        return
-      }
+      try {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const inviteToken = hashParams.get('invite_token')
 
-      // 성공적으로 인증되면 관리자 페이지로 리디렉션
-      router.push('/admin')
+        if (inviteToken) {
+          // 초대 토큰이 있으면 회원가입 페이지로
+          router.push(`/auth/signup#invite_token=${inviteToken}`)
+        } else {
+          // 그 외의 경우 관리자 페이지로
+          router.push('/admin')
+        }
+      } catch (error) {
+        console.error('Auth callback error:', error)
+        router.push('/auth/error')
+      }
     }
 
     handleAuthCallback()

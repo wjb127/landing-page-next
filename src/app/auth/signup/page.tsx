@@ -2,16 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
-export default function SetPassword() {
+export default function SignUp() {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (password !== confirmPassword) {
@@ -19,20 +21,26 @@ export default function SetPassword() {
       return
     }
 
+    if (password.length < 6) {
+      toast.error('비밀번호는 최소 6자 이상이어야 합니다.')
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
       })
 
       if (error) throw error
 
-      toast.success('비밀번호가 설정되었습니다.')
+      toast.success('회원가입이 완료되었습니다!')
       router.push('/admin')
     } catch (error) {
-      console.error('Error setting password:', error)
-      toast.error('비밀번호 설정 중 오류가 발생했습니다.')
+      console.error('Error signing up:', error)
+      toast.error('회원가입에 실패했습니다.')
     } finally {
       setIsLoading(false)
     }
@@ -41,11 +49,23 @@ export default function SetPassword() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center">비밀번호 설정</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <h1 className="text-2xl font-bold mb-6 text-center">회원가입</h1>
+        <form onSubmit={handleSignUp} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              새 비밀번호
+              이메일
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              비밀번호
             </label>
             <input
               type="password"
@@ -74,8 +94,14 @@ export default function SetPassword() {
             className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? '처리 중...' : '비밀번호 설정'}
+            {isLoading ? '처리 중...' : '회원가입'}
           </button>
+          <p className="text-center text-sm text-gray-600">
+            이미 계정이 있으신가요?{' '}
+            <Link href="/auth/login" className="text-blue-600 hover:underline">
+              로그인
+            </Link>
+          </p>
         </form>
       </div>
     </div>
