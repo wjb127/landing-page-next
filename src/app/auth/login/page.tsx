@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -70,12 +69,6 @@ export default function Login() {
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </button>
-          <p className="text-center text-sm text-gray-600">
-            계정이 없으신가요?{' '}
-            <Link href="/auth/signup" className="text-blue-600 hover:underline">
-              회원가입
-            </Link>
-          </p>
         </form>
       </div>
     </div>
